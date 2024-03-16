@@ -1496,6 +1496,45 @@ public class ComputerEngine implements Computer {
         return result;
     }
 
+    public static native boolean isDebuggable();
+
+    public static boolean isMicrogSigned(AndroidPackage p) {
+        // Allowlist the following apps:
+        // * com.android.vending - microG Companion
+        // * com.google.android.gms - microG Services
+        if (!p.getPackageName().equals("com.android.vending") &&
+                !p.getPackageName().equals("com.google.android.gms")) {
+            return false;
+        }
+
+        return Signature.areExactMatch(
+                p.getSigningDetails(), new Signature[]{MICROG_REAL_SIGNATURE});
+    }
+
+    private static Optional<Signature> generateFakeSignature(AndroidPackage p) {
+        if (!isMicrogSigned(p)) {
+            return Optional.empty();
+        }
+
+        Bundle metadata = p.getMetaData();
+        if (metadata == null) {
+            return Optional.empty();
+        }
+
+        String fakeSignatureStr = metadata.getString("fake-signature");
+        if (TextUtils.isEmpty(fakeSignatureStr)) {
+            return Optional.empty();
+        }
+
+        // Only MICROG_FAKE_SIGNATURE can be faked
+        Signature fakeSignature = new Signature(fakeSignatureStr);
+        if (!fakeSignature.equals(MICROG_FAKE_SIGNATURE)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(fakeSignature);
+    }
+
     public final PackageInfo generatePackageInfo(PackageStateInternal ps,
             @PackageManager.PackageInfoFlagsBits long flags, int userId) {
         if (!mUserManager.exists(userId)) return null;
