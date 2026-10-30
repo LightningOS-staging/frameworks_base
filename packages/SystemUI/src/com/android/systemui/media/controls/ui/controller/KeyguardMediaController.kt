@@ -274,6 +274,17 @@ constructor(
 
     var visibilityChangedListener: ((Boolean) -> Unit)? = null
 
+    /**
+     * Whether the notifications of an app are previewed above the shelf, which needs the space the
+     * media player would take.
+     */
+    var notificationPreviewVisible = false
+        set(value) {
+            if (field == value) return
+            field = value
+            refreshMediaPosition(reason = "notification preview visibility changed")
+        }
+
     /** single pane media container placed at the top of the notifications list */
     var singlePaneContainer: MediaContainerView? = null
         private set
@@ -392,7 +403,8 @@ constructor(
             isMediaHostVisible &&
                 isBypassNotEnabled &&
                 keyguardOrUserSwitcher &&
-                shouldBeVisibleForSplitShade
+                shouldBeVisibleForSplitShade &&
+                !notificationPreviewVisible
         logger.logRefreshMediaPosition(
             reason = reason,
             visible = visible,
@@ -475,6 +487,7 @@ constructor(
             withIncreasedIndent {
                 println("Self", this@KeyguardMediaController)
                 println("visible", visible)
+                println("notificationPreviewVisible", notificationPreviewVisible)
                 println("useSplitShade", useSplitShade)
                 println("bypassController.bypassEnabled", bypassController.bypassEnabled)
                 println("singlePaneContainer", singlePaneContainer)
